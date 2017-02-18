@@ -1,0 +1,11 @@
+node_modules
+coverage/
+output/
+test/
+tmp/
+*.log
+*.tgz
+*.sh
+.*
+karma.conf.js
+webpack.config.js

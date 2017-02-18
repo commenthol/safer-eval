@@ -1,0 +1,22 @@
+ui: mocha-bdd
+#server: ./test/support/server.js
+tunnel_host: http://focusaurus.com
+browsers:
+  - name: chrome
+    version: latest
+    platform: Windows 10
+  - name: firefox
+    platform: Windows 10
+    version:
+      - 45
+      - latest
+  - name: safari
+    version: latest
+  - name: microsoftedge
+    version: latest
+  # - name: iphone
+  #   version: latest
+  # - name: internet explorer
+  #   version: 9..latest
+  # - name: internet explorer
+  #   version: 10
