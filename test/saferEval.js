@@ -7,7 +7,7 @@ var clones = require('clones')
 var saferEval = require('..')
 
 var isBrowser = (typeof window !== 'undefined')
-var isSafari = isBrowser && version(/Version\/(\d+).* Safari/)
+// var isSafari = isBrowser && version(/Version\/(\d+).* Safari/)
 // var isFirefox = isBrowser && version(/Firefox\/(\d+)/)
 // var isEdge = isBrowser && version(/Edge\/(\d+)/)
 
@@ -246,7 +246,6 @@ describe('#saferEval', function () {
         })
         it('should evaluate', function (done) {
           this.timeout(10000)
-          if (isSafari) return done()
           saferEval(`(function () {
             window.setTimeout(function () {
               window.console.log('hello')

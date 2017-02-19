@@ -8,7 +8,8 @@ A safer approach for eval in node and browser. Before using this module, **ask
 yourself if there are no better options** than using saferEval.
 It is potentially better than the bad old `eval()` but still has some harmful potential.
 Especially when it comes to passing `context` props.
-Use [clones][] to wrap-up the methods you allow. Check the "harmful context" tests.
+Use [clones][] to wrap-up the methods you like to allow.
+Checkout the "harmful context" tests section.
 
 > **Warning:** The `saferEval` function may be harmful - so you are warned!
 
