@@ -1,6 +1,5 @@
+/* eslint no-new-func:0 */
 /* global describe, it */
-
-'use strict'
 
 var assert = require('assert')
 var clones = require('clones')
@@ -11,7 +10,7 @@ var isBrowser = (typeof window !== 'undefined')
 // var isFirefox = isBrowser && version(/Firefox\/(\d+)/)
 // var isEdge = isBrowser && version(/Edge\/(\d+)/)
 
-function version (regex) {
+function version (regex) { // eslint-disable-line no-unused-vars
   var m = regex.exec(navigator.userAgent)
   if (m) return m[1]
 }
@@ -44,49 +43,47 @@ describe('#saferEval', function () {
       var exp = test[2]
       it('to ' + type + ' ' + inp, function () {
         var res = saferEval(inp)
+
         assert.equal(toString.call(res), type)
+
         if (type === '[object Function]') {
           assert.equal(res(), exp())
         } else if (type === '[object Error]') {
           assert.equal(res.message, exp.message)
+        } else if (type === '[object Uint8Array]') {
+          assert.equal(res.toString(), exp.toString()) // can't deepEqual typed arrays on node4
         } else {
           assert.deepEqual(res, exp)
         }
       })
     })
 
+    it('to Function', function () {
+      var res = saferEval('new Function("return 9 + 25")') // eslint-disable-line no-dupe-keys
+      assert.equal(toString.call(res), '[object Function]')
+      assert.equal(res(), 34)
+    })
+    it('allowing console.log', function () {
+      var res = saferEval('console.log("hurrah")')
+      assert.equal(res, undefined)
+    })
+
+    if (!isBrowser) {
+      it('to Buffer', function () {
+        var res = saferEval("new Buffer('data')")
+        assert.equal(toString.call(res), '[object Uint8Array]')
+        assert.deepEqual(res, new Buffer('data'))
+      })
+    }
+
     it('on IIFE', function () {
       var res = saferEval('(function () { return 42 })()')
       assert.equal(toString.call(res), '[object Number]')
       assert.deepEqual(res, 42)
     })
-
-    if (!isBrowser) {
-      it('throwing on unknown Buffer', function () {
-        assert.throws(function () {
-          saferEval("new Buffer('data')")
-        }, /Buffer is not /)
-      })
-    }
   })
 
   describe('should evaluate with context', function () {
-    it('to Function', function () {
-      var res = saferEval('new Function("return 9 + 25")', {Function, Function}) // eslint-disable-line no-dupe-keys
-      assert.equal(toString.call(res), '[object Function]')
-      assert.equal(res(), 34)
-    })
-    it('allowing console.log', function () {
-      var res = saferEval('console.log("hurrah")', {console: console})
-      assert.equal(res, undefined)
-    })
-    if (!isBrowser) {
-      it('to Buffer', function () {
-        var res = saferEval("new Buffer('data')", {Buffer: Buffer})
-        assert.equal(toString.call(res), '[object Uint8Array]')
-        assert.deepEqual(res, new Buffer('data'))
-      })
-    }
     if (isBrowser) {
       it('can pass navigator', function () {
         var code = `{d: new Date('1970-01-01'), b: function () { return navigator.userAgent }}`
@@ -105,7 +102,8 @@ describe('#saferEval', function () {
           if (Math.abs(4) !== undefined) {
             throw new Error()
           }
-        })`)
+        })`
+      )
       res()
       assert.equal(Math.abs(-4), 4)
     })
@@ -127,41 +125,83 @@ describe('#saferEval', function () {
       var res = saferEval(`JSON.stringify({a: 1})`)
       assert.equal(res, '{"a":1}')
     })
+    it('unescape', function () {
+      saferEval('(unescape = function () { return 1 })')
+      assert.ok(unescape.toString() !== 'function () { return 1 })')
+    })
+    it('console.log', function () {
+      saferEval(`(function () {
+        console.log = function () { return 1 }
+        if (console.log() !== 1) {
+          throw new Error()
+        }
+      })()`)
+      assert.ok(console.log.toString() !== 'function () { return 1 })')
+    })
+    it('Array', function () {
+      saferEval(`(function () {
+        Array.prototype.reverse = function () { return 1 }
+        Array.exploit = 1
+      })()`)
+      assert.ok(Array.prototype.reverse.toString() !== 'function () { return 1 })')
+      assert.ok(Array.exploit === undefined)
+    })
+    it('Object', function () {
+      var res = saferEval(`(function () {
+          Object = {}
+          Object.assign = function () {}
+          if (Object.assign({a:1}, {b:1}) !== undefined) {
+            throw new Error()
+          }
+        })`)
+      res()
+      assert.deepEqual(Object.assign({a: 1}, {b: 2}), {a: 1, b: 2})
+    })
+    it('Function', function () {
+      var res = saferEval(`(function () {
+        Function = function () { return function () { return 7 } }
+        return Function("return 9 + 25")()
+      })()`)
+      assert.equal(res, 7)
+      assert.equal(Function('return 9 + 25')(), 34)
+    })
+    it('new Function', function () {
+      var res = saferEval(`(function () {
+        Function = function () { return function () { return 7 } }
+        return new Function("return 9 + 25")()
+      })()`)
+      assert.equal(res, 7)
+      assert.equal(new Function('return 9 + 25')(), 34)
+    })
+    if (!isBrowser) {
+      it('Buffer', function () {
+        saferEval('(function () { Buffer.poolSize = "exploit"; })()')
+        assert.ok(Buffer.poolSize !== 'exploit')
+      })
+      it('throws on setTimeout', function () {
+        assert.throws(function () {
+          saferEval('(function () { setTimeout = "exploit" })()')
+        })
+        assert.ok(setTimeout !== 'exploit')
+      })
+    }
+    if (isBrowser) {
+      it('setTimeout', function () {
+        saferEval('(setTimeout = "exploit")')
+        assert.ok(setTimeout !== 'exploit')
+      })
+    }
   })
 
   describe('should not evaluate', function () {
-    it('throws on console.log', function () {
-      assert.throws(function () {
-        saferEval('console.log("exploit")')
-      }, /console|log/)
-    })
     it('throws on eval', function () {
       assert.throws(function () {
         saferEval('eval(9 + 25)')
       })
     })
-    it('throws on Function', function () {
-      assert.throws(function () {
-        saferEval('Function("9 + 25")')
-      })
-    })
-    it('throws on new Function', function () {
-      assert.throws(function () {
-        saferEval('new Function("return 9 + 25")')
-      })
-    })
-    it('should not overwrite unescape', function () {
-      saferEval('(unescape = function () { return 1 })')
-      assert.ok(unescape.toString() !== 'function () { return 1 })')
-    })
 
     if (!isBrowser) {
       describe('in node', function () {
-        it('overwriting setTimeout', function () {
-          assert.throws(function () {
-            saferEval('(setTimeout = "exploit")')
-          }, /setTimeout is not defined/)
-        })
         it('throws on setting a global variable', function () {
           assert.throws(function () {
             saferEval('(global.exploit = "exploit")')
@@ -172,10 +212,6 @@ describe('#saferEval', function () {
 
     if (isBrowser) {
       describe('in browser', function () {
-        it('overwriting setTimeout', function () {
-          saferEval('(setTimeout = "exploit")')
-          assert.equal(toString.call(setTimeout), '[object Function]')
-        })
         it('throws on setting a global variable', function () {
           assert.throws(function () {
             saferEval('(window.exploit = "exploit")')
@@ -188,8 +224,8 @@ describe('#saferEval', function () {
   describe('harmful context', function () {
     if (!isBrowser) {
       describe('in node', function () {
-        it('evaluates global.eval', function () {
-          var res = saferEval('global.eval(9 + 25)', {global: global}) // !!! try to avoid passing a global context
+        it('evaluates global.eval if passing global as context - which is a bad idea', function () {
+          var res = saferEval('global.eval(9 + 25)', {global: global}) // !!! try to avoid passing global as context this way
           assert.equal(res, 34)
         })
         it('should not be able to exploit a global property', function () {

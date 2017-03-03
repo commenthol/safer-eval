@@ -6,7 +6,47 @@
 'use strict'
 
 const vm = require('vm')
-const {freshContext, allow} = require('./common')
+const {createContext, allow} = require('./common')
+
+/**
+* reuse saferEval context
+* @class
+* @example
+* const {SaferEval} = require('safer-eval')
+* const safer = new SaferEval()
+* let res1 = safer.runInContext('new Date('1970-01-01')')
+* let res2 = safer.runInContext('new Date('1970-07-01')')
+*/
+class SaferEval {
+  /**
+  * @param {Object} [context] - allowed context
+  * @param {Object} [options] - options for `vm.runInContext`
+  */
+  constructor (context, options) {
+    // define disallowed objects in context
+    const __context = createContext()
+    // apply "allowed" context vars
+    allow(context, __context)
+
+    this._context = vm.createContext(__context)
+    this._options = options
+  }
+
+  /**
+  * @param {String} code - a string containing javascript code
+  * @return {Any} evaluated code
+  */
+  runInContext (code) {
+    if (typeof code !== 'string') {
+      throw new TypeError('not a string')
+    }
+    return vm.runInContext(
+      '(function () {"use strict"; return ' + code + '})()',
+      this._context,
+      this._options
+    )
+  }
+}
 
 /**
 * A safer approach for eval. (node)
@@ -29,17 +69,8 @@ const {freshContext, allow} = require('./common')
 * // => toString.call(res.b) = '[object Buffer]'
 */
 function saferEval (code, context) {
-  if (typeof code !== 'string') {
-    throw new TypeError('not a string')
-  }
-
-  // define disallowed objects in context
-  const _context = freshContext()
-  // apply "allowed" context vars
-  allow(context, _context)
-
-  const sandbox = vm.createContext(_context)
-  return vm.runInNewContext('(function () {"use strict"; return ' + code + '})()', sandbox)
+  return new SaferEval(context).runInContext(code)
 }
 
 module.exports = saferEval
+module.exports.SaferEval = SaferEval

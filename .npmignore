@@ -9,3 +9,4 @@ tmp/
 .*
 karma.conf.js
 webpack.config.js
+Makefile

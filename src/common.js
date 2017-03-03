@@ -12,30 +12,19 @@ exports.hasGlobal = hasGlobal
 * create a fresh context where nearly nothing is allowed
 * @private
 */
-exports.freshContext = function () {
+exports.createContext = function () {
   // protection might not be complete!
   const context = {
     // disallowed
     global: undefined,
     process: undefined,
-    clearImmediate: undefined,
-    clearInterval: undefined,
-    clearTimeout: undefined,
-    setImmediate: undefined,
-    setInterval: undefined,
-    setTimeout: undefined,
-    console: undefined,
     module: undefined,
     require: undefined,
     document: undefined,
     window: undefined,
     Window: undefined,
     // no evil...
-    eval: undefined,
-    Function: undefined,
-    // protect against overwriting
-    JSON: clones(JSON),
-    Math: clones(Math)
+    eval: undefined
   }
 
   // locally define all potential global vars
@@ -43,11 +32,18 @@ exports.freshContext = function () {
     Object.keys(global).forEach(function (key) {
       context[key] = undefined
     })
+    cloneFunctions(context)
+    context.Buffer = _protect('Buffer')
+    context.console = clones(console, console) // console needs special treatment
   }
   if (hasWindow) {
     Object.keys(window).forEach(function (key) {
       context[key] = undefined
     })
+
+    cloneFunctions(context)
+    protectBuiltInObjects(context)
+    context.console = clones(console, console) // console needs special treatment
   }
 
   return context
@@ -61,4 +57,94 @@ exports.allow = function (context, newContext) {
   Object.keys(context || {}).forEach(function (key) {
     newContext[key] = context[key] // this is harmful - objects can be overwritten
   })
+}
+
+/**
+* clone global functions
+* @private
+*/
+function cloneFunctions (context) {
+  ;[
+    'clearImmediate',
+    'clearInterval',
+    'clearTimeout',
+    'setImmediate',
+    'setInterval',
+    'setTimeout'
+  ].forEach((str) => {
+    try {
+      let fn = new Function(`return ${str}`)() // eslint-disable-line no-new-func
+      context[str] = fn ? clones(fn) : undefined
+    } catch (e) {}
+  })
+}
+
+/**
+* wraps up build-in objects using a cloned copy
+* @private
+*/
+function protectBuiltInObjects (context) {
+  ;[
+    'Object',
+    'Function',
+    'Boolean',
+    'Symbol',
+    'Error',
+    'EvalError',
+    'InternalError',
+    'RangeError',
+    'ReferenceError',
+    'SyntaxError',
+    'TypeError',
+    'URIError',
+    'Number',
+    'Math',
+    'Date',
+    'String',
+    'RegExp',
+    'Array',
+    'Int8Array',
+    'Uint8Array',
+    'Uint8ClampedArray',
+    'Int16Array',
+    'Uint16Array',
+    'Int32Array',
+    'Uint32Array',
+    'Float32Array',
+    'Float64Array',
+    'Map',
+    'Set',
+    'WeakMap',
+    'WeakSet',
+    'ArrayBuffer',
+    'SharedArrayBuffer',
+    'Atomics',
+    'DataView',
+    'JSON',
+    'Promise',
+    'Generator',
+    'GeneratorFunction',
+    'Reflect',
+    'Proxy',
+    'Intl',
+    'Buffer'
+  ].forEach((str) => {
+    try {
+      context[str] = _protect(str)
+      new context[str]() // eslint-disable-line no-new
+    } catch (e) {
+    }
+  })
+}
+
+/**
+* @private
+*/
+function _protect (str) {
+  try {
+    let type = new Function(`return ${str}`)() // eslint-disable-line no-new-func
+    return type
+      ? clones.classes(type)
+      : undefined
+  } catch (e) {}
 }

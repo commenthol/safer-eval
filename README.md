@@ -16,7 +16,8 @@ Checkout the "harmful context" tests section.
 In node the `vm` module is used to sandbox the evaluation of `code`.
 
 The browser version `browser.js` might not be as safe as the node version
-`index.js` as here no real sandboxing is available.
+`index.js` as here no real sandboxing is available. Please consider modules like
+[sandboxr](https://www.npmjs.com/package/sandboxr).
 
 Runs on node and in modern browsers:
 
@@ -57,7 +58,7 @@ in node:
 ```js
 var saferEval = require('safer-eval')
 var code = `{d: new Date('1970-01-01'), b: new Buffer('data')}`
-var res = saferEval(code, {Buffer: Buffer})
+var res = saferEval(code)
 // => toString.call(res.d) = '[object Date]'
 // => toString.call(res.b) = '[object Buffer]'
 ```
@@ -90,6 +91,17 @@ var context = {
 }
 var res = saferEval(code ,context)
 // => res = 'SGVsbG8sIHdvcmxk'
+```
+
+## Reusing context
+
+Use `new SaferEval()` to reuse a once created context.
+
+```js
+const {SaferEval} = require('safer-eval')
+const safer = new SaferEval()
+var code = `{d: new Date('1970-01-01'), b: new Buffer('data')}`
+var res = safer.runInContext(code)
 ```
 
 ## License

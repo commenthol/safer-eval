@@ -35,7 +35,7 @@
     "zuul": "zuul --no-coverage --local 3000 -- test/*.js"
   },
   "dependencies": {
-    "clones": "^1.0.1"
+    "clones": "^1.1.0"
   },
   "devDependencies": {
     "babel-core": "^6.23.1",
