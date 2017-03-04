@@ -24,7 +24,8 @@ exports.createContext = function () {
     window: undefined,
     Window: undefined,
     // no evil...
-    eval: undefined
+    eval: undefined,
+    Function: undefined
   }
 
   // locally define all potential global vars
@@ -86,7 +87,6 @@ function cloneFunctions (context) {
 function protectBuiltInObjects (context) {
   ;[
     'Object',
-    'Function',
     'Boolean',
     'Symbol',
     'Error',

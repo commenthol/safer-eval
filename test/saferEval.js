@@ -58,11 +58,6 @@ describe('#saferEval', function () {
       })
     })
 
-    it('to Function', function () {
-      var res = saferEval('new Function("return 9 + 25")') // eslint-disable-line no-dupe-keys
-      assert.equal(toString.call(res), '[object Function]')
-      assert.equal(res(), 34)
-    })
     it('allowing console.log', function () {
       var res = saferEval('console.log("hurrah")')
       assert.equal(res, undefined)
@@ -197,6 +192,12 @@ describe('#saferEval', function () {
     it('throws on eval', function () {
       assert.throws(function () {
         saferEval('eval(9 + 25)')
+      })
+    })
+
+    it('to Function', function () {
+      assert.throws(function () {
+        saferEval('new Function("return 9 + 25")')
       })
     })
 
