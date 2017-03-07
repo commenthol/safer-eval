@@ -5,9 +5,7 @@
   "author": "commenthol <commenthol@gmail.com>",
   "license": "MIT",
   "main": "lib/index.js",
-  "browser": {
-    "lib/index.js": "lib/browser.js"
-  },
+  "browser": "lib/browser.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/commenthol/safer-eval.git"
