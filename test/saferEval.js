@@ -63,6 +63,24 @@ describe('#saferEval', function () {
       assert.equal(res, undefined)
     })
 
+    it('setTimeout passing a function', function (done) {
+      var res = saferEval('setTimeout(function () {Array._test = 111}, 5)')
+      assert.ok(res)
+      setTimeout(function () {
+        assert.equal(Array._test, undefined)
+        done()
+      }, 10)
+    })
+
+    it('setInterval passing a function', function (done) {
+      var res = saferEval('(function (){var id = setInterval(function () {Array._test = 111;  console.log("intervall"); clearInterval(id)}, 5)}())')
+      assert.equal(res)
+      setTimeout(function () {
+        assert.equal(Array._test, undefined)
+        done()
+      }, 15)
+    })
+
     if (!isBrowser) {
       it('to Buffer', function () {
         var res = saferEval("new Buffer('data')")
@@ -199,6 +217,26 @@ describe('#saferEval', function () {
       assert.throws(function () {
         saferEval('new Function("return 9 + 25")')
       })
+    })
+
+    it('throws on setTimeout passing a string', function (done) {
+      assert.throws(function () {
+        saferEval('setTimeout("Array._test = 111", 5)')
+      }, /setTimeout requires function as argument/)
+      setTimeout(function () {
+        assert.equal(Array._test, undefined)
+        done()
+      }, 15)
+    })
+
+    it('throws on setInterval passing a string', function (done) {
+      assert.throws(function () {
+        saferEval('setInterval("Array._test = 111", 5)')
+      }, /setInterval requires function as argument/)
+      setTimeout(function () {
+        assert.equal(Array._test, undefined)
+        done()
+      }, 15)
     })
 
     if (!isBrowser) {
