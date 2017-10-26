@@ -3,17 +3,27 @@ ui: mocha-bdd
 tunnel_host: http://focusaurus.com
 browsers:
   - name: chrome
-    version: latest
     platform: Windows 10
+    version:
+      - 55
+      - 61
+      - latest
   - name: firefox
     platform: Windows 10
     version:
       - 45
+      - 55
+      - 56
       - latest
   - name: safari
-    version: latest
+    version:
+      - 10
+      - 11
+      - latest
   - name: microsoftedge
-    version: latest
+    version:
+      - 15
+      - latest
   # - name: iphone
   #   version: latest
   # - name: internet explorer

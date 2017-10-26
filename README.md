@@ -23,12 +23,12 @@ Runs on node and in modern browsers:
 
 |                | Versions |
 | ---            | ---      |
-| **node**       | ~~0.12~~, 4, 6, 7  |
-| **Chrome**     | 55, 56   |
-| **Firefox**    | 45, 51   |
-| **Edge**       | 13, 14   |
+| **node**       | ~~0.12~~, 4, 6, 8 |
+| **Chrome**     | 55, 56, 61 |
+| **Firefox**    | 45, 51, 56 |
+| **Edge**       | 13, 14, 15 |
 | **IE**         | ~~11~~   |
-| **Safari**     | 10       |
+| **Safari**     | 10, 11   |
 | **iOS Safari** | 10       |
 
 ## Installation
@@ -67,7 +67,7 @@ in browser:
 
 ```js
 var saferEval = require('safer-eval')
-var code = `{d: new Date('1970-01-01'), b: function () { return navigator.userAgent }`
+var code = `{d: new Date('1970-01-01'), b: navigator.userAgent }`
 var res = saferEval(code, {navigator: window.navigator})
 // => toString.call(res.d) = '[object Date]'
 // => toString.call(res.b) = '[object Function]'

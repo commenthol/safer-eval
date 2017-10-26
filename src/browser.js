@@ -5,7 +5,7 @@
 
 'use strict'
 
-const {createContext, allow} = require('./common')
+const {createContext, allow, noIIFE} = require('./common')
 
 /**
 * reuse saferEval context
@@ -19,14 +19,22 @@ const {createContext, allow} = require('./common')
 class SaferEval {
   /**
   * @param {Object} [context] - allowed context
+  * @param {Object} [options] - options
+  * @param {Boolean} [options.iife] - explicitely allow Immediately-invoked function expression IIFE
   */
-  constructor (context) {
+  constructor (context, options) {
+    if (context && 'iife' in context) {
+      options = context
+      context = undefined
+    }
+    const {iife} = options || {}
     // define disallowed objects in context
     const __context = createContext()
     // apply "allowed" context vars
     allow(context, __context)
 
     this._context = __context
+    this._optionNoIIFE = !iife
   }
 
   /**
@@ -37,6 +45,7 @@ class SaferEval {
     if (typeof code !== 'string') {
       throw new TypeError('not a string')
     }
+    if (this._optionNoIIFE) code = noIIFE(code)
     const __context = this._context
 
     let src = ''
@@ -76,7 +85,7 @@ class SaferEval {
 * // => toString.call(res.b) = '[object Function]'
 */
 function saferEval (code, context, opts = {}) {
-  return new SaferEval(context).runInContext(code)
+  return new SaferEval(context, opts).runInContext(code)
 }
 
 module.exports = saferEval

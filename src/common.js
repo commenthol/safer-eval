@@ -8,6 +8,9 @@ exports.hasWindow = hasWindow
 const hasGlobal = (typeof global !== 'undefined')
 exports.hasGlobal = hasGlobal
 
+const noIIFE = (str) => str.replace(/\b[Ff]unction\s*\(/gm, ' IIFE is not allowed ')
+exports.noIIFE = noIIFE
+
 /**
 * create a fresh context where nearly nothing is allowed
 * @private
@@ -74,8 +77,8 @@ function cloneFunctions (context) {
     try {
       let fn = new Function(`return ${str}`)() // eslint-disable-line no-new-func
       context[str] = fn
-        ? function () {
-          return fn.apply(null, [].slice.call(arguments))
+        ? function (id) {
+          return fn(id)
         }
         : undefined
     } catch (e) {}
@@ -89,9 +92,9 @@ function cloneFunctions (context) {
     try {
       let fn = new Function(`return ${str}`)() // eslint-disable-line no-new-func
       context[str] = fn
-        ? function (f) {
+        ? function (f, t) {
           if (typeof f === 'function') {
-            return fn.apply(null, [].slice.call(arguments))
+            return fn(f, t)
           } else {
             throw new Error(str + ' requires function as argument')
           }

@@ -15,6 +15,11 @@ function version (regex) { // eslint-disable-line no-unused-vars
   if (m) return m[1]
 }
 
+/**
+* tests which are not recommended in normal usecases are marked with "EVIL"
+* so YOU should not do this in your code
+*/
+
 describe('#saferEval', function () {
   it('should throw if code is not a string', function () {
     assert.throws(function () {
@@ -35,14 +40,15 @@ describe('#saferEval', function () {
       ['[object Date]', 'new Date("1970-01-01T00:00:00")', new Date('1970-01-01T00:00:00')],
       ['[object Error]', 'new Error("boom")', new Error('boom')],
       ['[object Uint8Array]', 'new Uint8Array([0, 1, 2, 3])', new Uint8Array([0, 1, 2, 3])],
-      ['[object Function]', 'function () { return 3 }', function () { return 3 }]
+      ['[object Function]', 'function () { return 3 }', function () { return 3 }, true]
     ]
     tests.forEach(function (test) {
       var type = test[0]
       var inp = test[1]
       var exp = test[2]
+      var iife = test[3]
       it('to ' + type + ' ' + inp, function () {
-        var res = saferEval(inp)
+        var res = saferEval(inp, {iife: iife})
 
         assert.equal(toString.call(res), type)
 
@@ -64,7 +70,7 @@ describe('#saferEval', function () {
     })
 
     it('setTimeout passing a function', function (done) {
-      var res = saferEval('setTimeout(function () {Array._test = 111}, 5)')
+      var res = saferEval('setTimeout(function () {Array._test = 111}, 5)', {iife: true})
       assert.ok(res)
       setTimeout(function () {
         assert.equal(Array._test, undefined)
@@ -73,7 +79,7 @@ describe('#saferEval', function () {
     })
 
     it('setInterval passing a function', function (done) {
-      var res = saferEval('(function (){var id = setInterval(function () {Array._test = 111;  console.log("intervall"); clearInterval(id)}, 5)}())')
+      var res = saferEval('(function (){var id = setInterval(function () {Array._test = 111;  console.log("intervall"); clearInterval(id)}, 5)}())', {iife: true})
       assert.equal(res)
       setTimeout(function () {
         assert.equal(Array._test, undefined)
@@ -90,7 +96,7 @@ describe('#saferEval', function () {
     }
 
     it('on IIFE', function () {
-      var res = saferEval('(function () { return 42 })()')
+      var res = saferEval('(function () { return 42 })()', {iife: true})
       assert.equal(toString.call(res), '[object Number]')
       assert.deepEqual(res, 42)
     })
@@ -99,11 +105,10 @@ describe('#saferEval', function () {
   describe('should evaluate with context', function () {
     if (isBrowser) {
       it('can pass navigator', function () {
-        var code = `{d: new Date('1970-01-01'), b: function () { return navigator.userAgent }}`
+        var code = `{d: new Date('1970-01-01'), b: navigator.userAgent}`
         var res = saferEval(code, {navigator: window.navigator})
-        assert.equal(toString.call(res.b), '[object Function]')
-        assert.equal(toString.call(res.b()), '[object String]')
-        // console.log(res.b())
+        assert.equal(typeof res.b, 'string')
+        // console.log(res.b)
       })
     }
   })
@@ -115,7 +120,7 @@ describe('#saferEval', function () {
           if (Math.abs(4) !== undefined) {
             throw new Error()
           }
-        })`
+        })`, {iife: true}
       )
       res()
       assert.equal(Math.abs(-4), 4)
@@ -130,7 +135,7 @@ describe('#saferEval', function () {
           if (JSON.stringify({a: 1}) !== undefined) {
             throw new Error()
           }
-        })`)
+        })`, {iife: true})
       res()
       assert.equal(JSON.stringify({a: 1}), '{"a":1}')
     })
@@ -139,7 +144,7 @@ describe('#saferEval', function () {
       assert.equal(res, '{"a":1}')
     })
     it('unescape', function () {
-      saferEval('(unescape = function () { return 1 })')
+      saferEval('(unescape = function () { return 1 })', {iife: true})
       assert.ok(unescape.toString() !== 'function () { return 1 })')
     })
     it('console.log', function () {
@@ -148,14 +153,14 @@ describe('#saferEval', function () {
         if (console.log() !== 1) {
           throw new Error()
         }
-      })()`)
+      })()`, {iife: true})
       assert.ok(console.log.toString() !== 'function () { return 1 })')
     })
     it('Array', function () {
       saferEval(`(function () {
         Array.prototype.reverse = function () { return 1 }
         Array.exploit = 1
-      })()`)
+      })()`, {iife: true})
       assert.ok(Array.prototype.reverse.toString() !== 'function () { return 1 })')
       assert.ok(Array.exploit === undefined)
     })
@@ -166,7 +171,7 @@ describe('#saferEval', function () {
           if (Object.assign({a:1}, {b:1}) !== undefined) {
             throw new Error()
           }
-        })`)
+        })`, {iife: true})
       res()
       assert.deepEqual(Object.assign({a: 1}, {b: 2}), {a: 1, b: 2})
     })
@@ -174,7 +179,7 @@ describe('#saferEval', function () {
       var res = saferEval(`(function () {
         Function = function () { return function () { return 7 } }
         return Function("return 9 + 25")()
-      })()`)
+      })()`, {iife: true})
       assert.equal(res, 7)
       assert.equal(Function('return 9 + 25')(), 34)
     })
@@ -182,13 +187,13 @@ describe('#saferEval', function () {
       var res = saferEval(`(function () {
         Function = function () { return function () { return 7 } }
         return new Function("return 9 + 25")()
-      })()`)
+      })()`, {iife: true})
       assert.equal(res, 7)
       assert.equal(new Function('return 9 + 25')(), 34)
     })
     if (!isBrowser) {
       it('Buffer', function () {
-        saferEval('(function () { Buffer.poolSize = "exploit"; })()')
+        saferEval('(function () { Buffer.poolSize = "exploit"; })()', {iife: true})
         assert.ok(Buffer.poolSize !== 'exploit')
       })
     }
@@ -302,7 +307,7 @@ describe('#saferEval', function () {
   describe('harmful context', function () {
     if (!isBrowser) {
       describe('in node', function () {
-        it('evaluates global.eval if passing global as context - which is a bad idea', function () {
+        it('EVIL - evaluates global.eval if passing global as context - which is a bad idea', function () {
           var res = saferEval('global.eval(9 + 25)', {global: global}) // !!! try to avoid passing global as context this way
           assert.equal(res, 34)
         })
@@ -321,7 +326,7 @@ describe('#saferEval', function () {
               global.console.log('hello')
             }, 10)
             global.clearTimeout = undefined
-          })()`, {global: clones(global)})
+          })()`, {global: clones(global)}, {iife: true})
           setTimeout(function () {
             assert.ok(global.clearTimeout !== undefined)
             done()
@@ -331,13 +336,14 @@ describe('#saferEval', function () {
     }
 
     if (isBrowser) {
-      describe.only('in browser', function () {
+      describe('in browser', function () {
         it('evaluates window.eval', function () {
           this.timeout(10000)
           var res = saferEval('window.eval(9 + 25)', {window: window}) // !!! try to avoid passing a global context
           assert.equal(res, 34)
         })
         it('should not be able to exploit into a global property', function () {
+          // FAILS on FF@56
           this.timeout(10000)
           try {
             saferEval("(window.myglobal = 'exploited')", clones({window: window}))
@@ -361,14 +367,14 @@ describe('#saferEval', function () {
           assert.equal(typeof res[1], 'number')
           assert.equal(res[2], 'SGVsbG8sIHdvcmxk')
         })
-        it('should evaluate', function (done) {
+        it('EVIL - should evaluate', function (done) {
           this.timeout(10000)
           saferEval(`(function () {
             window.setTimeout(function () {
               window.console.log('hello')
             }, 10)
             // window.clearTimeout = undefined // this is harmful!!!
-          })()`, {window: window})
+          })()`, {window: window}, {iife: true}) // <= AVOID THIS
           setTimeout(function () {
             // assert.ok(window.clearTimeout !== undefined)
             done()
@@ -387,7 +393,7 @@ describe('#saferEval', function () {
               console.log('hello', Date.now() - start)
             }, 10)
             clearTimeout = undefined
-          })()`, context)
+          })()`, context, {iife: true})
           setTimeout(function () {
             assert.ok(clearTimeout !== undefined)
             done()
@@ -395,5 +401,31 @@ describe('#saferEval', function () {
         })
       })
     }
+  })
+
+  describe('trying DoS', function () {
+    it.skip('EVIL - hooks up the process ... an never comes back', function () {
+      const res = saferEval('(function () { while (1) {} })()', {iife: true})
+      console.log(res) // never reaches here
+    })
+    it('should not hook up the process as `function` is disallowed', function () {
+      const serialized = `(\u0066\u0075\u006e\u0063\u0074\u0069\u006f\u006e(){ while (1) {} })()`
+      assert.throws(() => {
+        const res = saferEval(serialized)
+      })
+    })
+    it('should run recursive function ... and throw with RangeError', function () {
+      const serialized = `(
+        function () {
+          function recursive () {
+            recursive()
+          }
+          recursive()
+        })()
+      `
+      assert.throws(() => {
+        const res = saferEval(serialized, {iife: true})
+      })
+    })
   })
 })

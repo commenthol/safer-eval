@@ -2,28 +2,22 @@
   "name": "safer-eval",
   "version": "1.2.3",
   "description": "a safer eval",
-  "author": "commenthol <commenthol@gmail.com>",
+  "keywords": [
+    "eval",
+    "safe"
+  ],
+  "bugs": {
+    "url": "https://github.com/commenthol/safer-eval/issues"
+  },
   "license": "MIT",
+  "author": "commenthol <commenthol@gmail.com>",
   "main": "./lib/index.js",
-  "browser": {
-    "./lib/index.js": "./lib/browser.js"
+  "directories": {
+    "test": "test"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/commenthol/safer-eval.git"
-  },
-  "bugs": {
-    "url": "https://github.com/commenthol/safer-eval/issues"
-  },
-  "keywords": [
-    "safe",
-    "eval"
-  ],
-  "engines": {
-    "node": ">=4.0.0"
-  },
-  "directories": {
-    "test": "test"
   },
   "scripts": {
     "clean": "rimraf lib",
@@ -33,6 +27,14 @@
     "test": "mocha",
     "transpile": "babel -d lib src",
     "zuul": "zuul --no-coverage --local 3000 -- test/*.js"
+  },
+  "browser": {
+    "./lib/index.js": "./lib/browser.js"
+  },
+  "babel": {
+    "presets": [
+      "es2015"
+    ]
   },
   "dependencies": {
     "clones": "^1.1.0"
@@ -55,9 +57,7 @@
     "webpack": "^2.2.1",
     "zuul": "^3.11.1"
   },
-  "babel": {
-    "presets": [
-      "es2015"
-    ]
+  "engines": {
+    "node": ">=4.0.0"
   }
 }
