@@ -191,48 +191,50 @@ describe('#saferEval', function () {
         saferEval('(function () { Buffer.poolSize = "exploit"; })()')
         assert.ok(Buffer.poolSize !== 'exploit')
       })
-      it('throws on setTimeout', function () {
-        assert.throws(function () {
-          saferEval('(function () { setTimeout = "exploit" })()')
-        })
-        assert.ok(setTimeout !== 'exploit')
-      })
     }
-    if (isBrowser) {
-      it('setTimeout', function () {
+    it('setTimeout', function () {
+      try {
         saferEval('(setTimeout = "exploit")')
-        assert.ok(setTimeout !== 'exploit')
-      })
-    }
+      } catch (e) {}
+      assert.ok(setTimeout !== 'exploit')
+    })
   })
 
   describe('should not evaluate', function () {
     it('throws on eval', function () {
-      assert.throws(function () {
-        saferEval('eval(9 + 25)')
-      })
+      let res
+      try {
+        res = saferEval('eval(9 + 25)')
+      } catch (e) {}
+      assert.equal(res, undefined)
     })
 
     it('to Function', function () {
-      assert.throws(function () {
-        saferEval('new Function("return 9 + 25")')
-      })
+      let res
+      try {
+        res = saferEval('new Function("return 9 + 25")')
+      } catch (e) {}
+      assert.equal(res, undefined)
     })
 
-    it('throws on setTimeout passing a string', function (done) {
-      assert.throws(function () {
+    it('setTimeout passing a string', function (done) {
+      try {
         saferEval('setTimeout("Array._test = 111", 5)')
-      }, /setTimeout requires function as argument/)
+      } catch (e) {
+        /setTimeout requires function as argument/.test(e)
+      }
       setTimeout(function () {
         assert.equal(Array._test, undefined)
         done()
       }, 15)
     })
 
-    it('throws on setInterval passing a string', function (done) {
-      assert.throws(function () {
+    it('setInterval passing a string', function (done) {
+      try {
         saferEval('setInterval("Array._test = 111", 5)')
-      }, /setInterval requires function as argument/)
+      } catch (e) {
+        /setInterval requires function as argument/.test(e)
+      }
       setTimeout(function () {
         assert.equal(Array._test, undefined)
         done()
@@ -241,20 +243,57 @@ describe('#saferEval', function () {
 
     if (!isBrowser) {
       describe('in node', function () {
-        it('throws on setting a global variable', function () {
-          assert.throws(function () {
+        it('setting a global variable', function () {
+          try {
             saferEval('(global.exploit = "exploit")')
-          })
+          } catch (e) {
+            /TypeError/.test(e)
+          }
+          assert.equal(global.exploit, undefined)
+        })
+        it('should not allow using this.constructor.constructor', function () {
+          let res
+          try {
+            res = saferEval("this.constructor.constructor('return process')()")
+          } catch (e) {
+            /TypeError/.test(e)
+          }
+          assert.equal(res, undefined)
+        })
+        it('should not allow using Object.constructor.constructor', function () {
+          let res
+          try {
+            res = saferEval("Object.constructor.constructor('return process')()")
+          } catch (e) {
+            /TypeError/.test(e)
+          }
+          assert.equal(res, undefined)
         })
       })
     }
 
     if (isBrowser) {
       describe('in browser', function () {
-        it('throws on setting a global variable', function () {
-          assert.throws(function () {
+        it('setting a global variable', function () {
+          try {
             saferEval('(window.exploit = "exploit")')
-          })
+          } catch (e) {}
+          assert.equal(window.exploit, undefined)
+        })
+        it('should not allow using this.constructor.constructor', function () {
+          let res
+          try {
+            res = saferEval("this.constructor.constructor('return window')()")
+          } catch (e) {}
+          assert.equal(res, undefined)
+        })
+        it('should not allow using Object.constructor.constructor', function () {
+          let res
+          try {
+            res = saferEval("Object.constructor.constructor('return localStorage')()")
+          } catch (e) {
+          }
+          assert.equal(res, undefined)
         })
       })
     }
@@ -292,7 +331,7 @@ describe('#saferEval', function () {
     }
 
     if (isBrowser) {
-      describe('in browser', function () {
+      describe.only('in browser', function () {
         it('evaluates window.eval', function () {
           this.timeout(10000)
           var res = saferEval('window.eval(9 + 25)', {window: window}) // !!! try to avoid passing a global context
@@ -300,7 +339,10 @@ describe('#saferEval', function () {
         })
         it('should not be able to exploit into a global property', function () {
           this.timeout(10000)
-          saferEval("(window.myglobal = 'exploited')", clones({window: window}))
+          try {
+            saferEval("(window.myglobal = 'exploited')", clones({window: window}))
+          } catch (e) {
+          }
           assert.equal(window.myglobal, undefined)
         })
         it('using safer context', function () {

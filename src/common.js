@@ -45,6 +45,7 @@ exports.createContext = function () {
     cloneFunctions(context)
     protectBuiltInObjects(context)
     context.console = clones(console, console) // console needs special treatment
+    context.Object.constructor.constructor = 'function () {}'
   }
 
   return context
@@ -108,6 +109,7 @@ function cloneFunctions (context) {
 function protectBuiltInObjects (context) {
   ;[
     'Object',
+    // 'Object.constructor.constructor',
     'Boolean',
     'Symbol',
     'Error',
