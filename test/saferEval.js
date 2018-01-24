@@ -331,7 +331,7 @@ describe('#saferEval', function () {
     }
 
     if (isBrowser) {
-      describe.only('in browser', function () {
+      describe('in browser', function () {
         it('evaluates window.eval', function () {
           this.timeout(10000)
           var res = saferEval('window.eval(9 + 25)', {window: window}) // !!! try to avoid passing a global context
