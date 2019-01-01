@@ -5,7 +5,7 @@
 
 'use strict'
 
-const {createContext, allow} = require('./common')
+const { createContext, allow } = require('./common')
 
 /**
 * reuse saferEval context
@@ -39,7 +39,7 @@ class SaferEval {
     }
     const __context = this._context
 
-    let src = ''
+    let src = 'this.constructor.constructor = function () {};\n'
     // set local scope vars from each context property
     Object.keys(__context).forEach(function (key) {
       src += 'var ' + key + ' = __context[\'' + key + '\'];\n'

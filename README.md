@@ -23,13 +23,13 @@ Runs on node and in modern browsers:
 
 |                | Versions |
 | ---            | ---      |
-| **node**       | ~~0.12~~, 4, 6, 7  |
-| **Chrome**     | 55, 56   |
-| **Firefox**    | 45, 51   |
-| **Edge**       | 13, 14   |
-| **IE**         | ~~11~~   |
-| **Safari**     | 10       |
-| **iOS Safari** | 10       |
+| **node**       | 4, 6, 8, 10, 11 |
+| **Chrome**     | 69, 71 |
+| **Firefox**    | 60, 64 |
+| **Edge**       | 17, 18 |
+| **IE**         | ~~11~~ |
+| **Safari**     | 11, 12|
+| **iOS Safari** | 11.3, 12.0 |
 
 ## Installation
 

@@ -32,6 +32,13 @@ module.exports = function karmaConfig (config) {
       'test/*.js': ['webpack', 'sourcemap']
     },
 
+    client: {
+      mocha: {
+        // change Karma's debug.html to the mocha web reporter
+        reporter: 'html'
+      }
+    },
+
     browsers: [
       'Firefox',
       'Chrome'

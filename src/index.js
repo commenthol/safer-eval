@@ -6,7 +6,7 @@
 'use strict'
 
 const vm = require('vm')
-const {createContext, allow} = require('./common')
+const { createContext, allow } = require('./common')
 
 /**
 * reuse saferEval context
