@@ -1,5 +1,5 @@
 
-all: v4. v6. v7.
+all: v4. v6. v8. v10. v11.
 
 v%:
 	n $@ && npm test
