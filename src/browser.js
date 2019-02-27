@@ -44,6 +44,7 @@ class SaferEval {
     Object.keys(__context).forEach(function (key) {
       // Make sure there are no unexpected characters 
       if (key.includes('-')) {
+        console.warn(`Cannot add ${key} since it contains an invalid character.`);
         return;
       }
 
