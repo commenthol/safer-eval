@@ -1,1 +1,3 @@
 extends: standard
+env:
+  mocha: true

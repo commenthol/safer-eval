@@ -1,5 +1,4 @@
 /* eslint no-new-func:0 */
-/* global describe, it */
 
 var assert = require('assert')
 var clones = require('clones')
@@ -19,6 +18,12 @@ function version (regex) { // eslint-disable-line no-unused-vars
   var m = regex.exec(navigator.userAgent)
   if (m) return m[1]
 }
+
+const noop = function () {}
+const describeBrowser = isBrowser ? describe : noop
+const describeNode = !isBrowser ? describe : noop
+const itBrowser = isBrowser ? it : noop
+const itNode = !isBrowser ? it : noop
 
 describe('#saferEval', function () {
   it('should throw if code is not a string', function () {
@@ -86,31 +91,27 @@ describe('#saferEval', function () {
       }, 15)
     })
 
-    if (!isBrowser) {
-      it('to Buffer', function () {
-        var res = saferEval("new Buffer('data')")
-        assert.strictEqual(toString.call(res), '[object Uint8Array]')
-        assert.deepStrictEqual(res, Buffer.from('data'))
-      })
-    }
-
     it('on IIFE', function () {
       var res = saferEval('(function () { return 42 })()')
       assert.strictEqual(toString.call(res), '[object Number]')
       assert.deepStrictEqual(res, 42)
     })
+
+    itNode('to Buffer', function () {
+      var res = saferEval("new Buffer('data')")
+      assert.strictEqual(toString.call(res), '[object Uint8Array]')
+      assert.deepStrictEqual(res, Buffer.from('data'))
+    })
   })
 
   describe('should evaluate with context', function () {
-    if (isBrowser) {
-      it('can pass navigator', function () {
-        var code = `{d: new Date('1970-01-01'), b: function () { return navigator.userAgent }}`
-        var res = saferEval(code, { navigator: window.navigator })
-        assert.strictEqual(toString.call(res.b), '[object Function]')
-        assert.strictEqual(toString.call(res.b()), '[object String]')
-        // console.log(res.b())
-      })
-    }
+    itBrowser('can pass navigator', function () {
+      var code = `{d: new Date('1970-01-01'), b: function () { return navigator.userAgent }}`
+      var res = saferEval(code, { navigator: window.navigator })
+      assert.strictEqual(toString.call(res.b), '[object Function]')
+      assert.strictEqual(toString.call(res.b()), '[object String]')
+      // console.log(res.b())
+    })
   })
 
   describe('should protect against overwriting', function () {
@@ -191,12 +192,10 @@ describe('#saferEval', function () {
       assert.strictEqual(res, 7)
       assert.strictEqual(new Function('return 9 + 25')(), 34)
     })
-    if (!isBrowser) {
-      it('Buffer', function () {
-        saferEval('(function () { Buffer.poolSize = "exploit"; })()')
-        assert.ok(Buffer.poolSize !== 'exploit')
-      })
-    }
+    itNode('Buffer', function () {
+      saferEval('(function () { Buffer.poolSize = "exploit"; })()')
+      assert.ok(Buffer.poolSize !== 'exploit')
+    })
     it('setTimeout', function () {
       try {
         saferEval('(setTimeout = "exploit")')
@@ -246,161 +245,193 @@ describe('#saferEval', function () {
       }, 15)
     })
 
-    if (!isBrowser) {
-      describe('in node', function () {
-        it('setting a global variable', function () {
-          try {
-            saferEval('(global.exploit = "exploit")')
-          } catch (e) {
-            /TypeError/.test(e)
-          }
-          assert.strictEqual(global.exploit, undefined)
-        })
-        it('should not allow using this.constructor.constructor', function () {
-          let res
-          try {
-            res = saferEval("this.constructor.constructor('return process')()")
-          } catch (e) {
-          }
-          assert.strictEqual(res, undefined)
-        })
-        it('should not allow using Object.constructor.constructor', function () {
-          let res
-          try {
-            res = saferEval("Object.constructor.constructor('return process')()")
-          } catch (e) {
-          }
-          assert.strictEqual(res, undefined)
-        })
+    describeNode('in node', function () {
+      it('setting a global variable', function () {
+        try {
+          saferEval('(global.exploit = "exploit")')
+        } catch (e) {
+          /TypeError/.test(e)
+        }
+        assert.strictEqual(global.exploit, undefined)
       })
-    }
+      it('should not allow using this.constructor.constructor', function () {
+        let res
+        try {
+          res = saferEval("this.constructor.constructor('return process')()")
+        } catch (e) {
+        }
+        assert.strictEqual(res, undefined)
+      })
+      it('should not allow using Object.constructor.constructor', function () {
+        let res
+        try {
+          res = saferEval("Object.constructor.constructor('return process')()")
+        } catch (e) {
+        }
+        assert.strictEqual(res, undefined)
+      })
+    })
 
-    if (isBrowser) {
-      describe('in browser', function () {
-        it('setting a global variable', function () {
-          try {
-            saferEval('(window.exploit = "exploit")')
-          } catch (e) {}
-          assert.strictEqual(window.exploit, undefined)
-        })
-        it('should not allow using this.constructor.constructor', function () {
-          let res
-          try {
-            res = saferEval("this.constructor.constructor('return window.atob(\"42\")')()")
-          } catch (e) {}
-          assert.strictEqual(res, undefined)
-          assert.strictEqual(
-            this.constructor.constructor('return window.atob("42")')(), 'ã',
-            'should not overwrite'
-          )
-        })
-        it('should not allow using Object.constructor.constructor', function () {
-          let res
-          try {
-            res = saferEval("Object.constructor.constructor('return localStorage')()")
-          } catch (e) {
-          }
-          assert.strictEqual(res, undefined)
-        })
+    describeBrowser('in browser', function () {
+      it('setting a global variable', function () {
+        try {
+          saferEval('(window.exploit = "exploit")')
+        } catch (e) {}
+        assert.strictEqual(window.exploit, undefined)
       })
-    }
+      it('should not allow using this.constructor.constructor', function () {
+        let res
+        try {
+          res = saferEval("this.constructor.constructor('return window.atob(\"42\")')()")
+        } catch (e) {}
+        assert.strictEqual(res, undefined)
+        assert.strictEqual(
+          this.constructor.constructor('return window.atob("42")')(), 'ã',
+          'should not overwrite'
+        )
+      })
+      it('should not allow using Object.constructor.constructor', function () {
+        let res
+        try {
+          res = saferEval("Object.constructor.constructor('return localStorage')()")
+        } catch (e) {
+        }
+        assert.strictEqual(res, undefined)
+      })
+    })
   })
 
   describe('harmful context', function () {
-    if (!isBrowser) {
-      describe('in node', function () {
-        it('evaluates global.eval if passing global as context - which is a bad idea', function () {
-          var res = saferEval('global.eval(9 + 25)', { global: global }) // !!! try to avoid passing global as context this way
-          assert.strictEqual(res, 34)
-        })
-        it('should not be able to exploit a global property', function () {
-          global.myglobal = 'test'
-          saferEval("(global.myglobal = 'exploited')", { global: clones(global) })
-          assert.strictEqual(global.myglobal, 'test')
-        })
-        it('should not be able to overwrite a global method', function () {
-          saferEval('(global.setTimeout = undefined)', { global: clones(global) })
-          assert.ok(global.setTimeout !== undefined)
-        })
-        it('should evaluate', function (done) {
-          saferEval(`(function () {
+    describeNode('in node', function () {
+      it('evaluates global.eval if passing global as context - which is a bad idea', function () {
+        var res = saferEval('global.eval(9 + 25)', { global: global }) // !!! try to avoid passing global as context this way
+        assert.strictEqual(res, 34)
+      })
+      it('should not be able to exploit a global property', function () {
+        global.myglobal = 'test'
+        saferEval("(global.myglobal = 'exploited')", { global: clones(global) })
+        assert.strictEqual(global.myglobal, 'test')
+      })
+      it('should not be able to overwrite a global method', function () {
+        saferEval('(global.setTimeout = undefined)', { global: clones(global) })
+        assert.ok(global.setTimeout !== undefined)
+      })
+      it('should evaluate', function (done) {
+        saferEval(`(function () {
             global.setTimeout(function () {
               global.console.log('hello')
             }, 10)
             global.clearTimeout = undefined
           })()`, { global: clones(global) })
-          setTimeout(function () {
-            assert.ok(global.clearTimeout !== undefined)
-            done()
-          }, 30)
-        })
+        setTimeout(function () {
+          assert.ok(global.clearTimeout !== undefined)
+          done()
+        }, 30)
       })
-    }
+    })
 
-    if (isBrowser) {
-      describe('in browser', function () {
-        it('evaluates window.eval', function () {
-          this.timeout(10000)
-          var res = saferEval('window.eval(9 + 25)', { window: window }) // !!! try to avoid passing a global context
-          assert.strictEqual(res, 34)
-        })
-        it('should not be able to exploit into a global property', function () {
-          this.timeout(10000)
-          try {
-            saferEval("(window.myglobal = 'exploited')", clones({ window: window }))
-          } catch (e) {
+    describeBrowser('in browser', function () {
+      it('evaluates window.eval', function () {
+        this.timeout(10000)
+        var res = saferEval('window.eval(9 + 25)', { window: window }) // !!! try to avoid passing a global context
+        assert.strictEqual(res, 34)
+      })
+      it('should not be able to exploit into a global property', function () {
+        this.timeout(10000)
+        try {
+          saferEval("(window.myglobal = 'exploited')", clones({ window: window }))
+        } catch (e) {
+        }
+        assert.strictEqual(window.myglobal, undefined)
+      })
+      it('using safer context', function () {
+        var code = `[window.location.origin, window.screen.availWidth, window.btoa('Hello, world')]`
+        var context = {
+          window: {
+            screen: window.screen, // can't wrap screen and location with clones
+            location: window.location,
+            btoa: clones(window.btoa, window)
           }
-          assert.strictEqual(window.myglobal, undefined)
-        })
-        it('using safer context', function () {
-          var code = `[window.location.origin, window.screen.availWidth, window.btoa('Hello, world')]`
-          var context = {
-            window: {
-              screen: window.screen, // can't wrap screen and location with clones
-              location: window.location,
-              btoa: clones(window.btoa, window)
-            }
-          }
-          var res = saferEval(code, context)
-          // console.log(res)
-          assert.strictEqual(res.length, 3)
-          assert.strictEqual(typeof res[0], 'string')
-          assert.strictEqual(typeof res[1], 'number')
-          assert.strictEqual(res[2], 'SGVsbG8sIHdvcmxk')
-        })
-        it('should evaluate', function (done) {
-          this.timeout(10000)
-          saferEval(`(function () {
+        }
+        var res = saferEval(code, context)
+        // console.log(res)
+        assert.strictEqual(res.length, 3)
+        assert.strictEqual(typeof res[0], 'string')
+        assert.strictEqual(typeof res[1], 'number')
+        assert.strictEqual(res[2], 'SGVsbG8sIHdvcmxk')
+      })
+      it('should evaluate', function (done) {
+        this.timeout(10000)
+        saferEval(`(function () {
             window.setTimeout(function () {
               window.console.log('hello')
             }, 10)
             // window.clearTimeout = undefined // this is harmful!!!
           })()`, { window: window })
-          setTimeout(function () {
-            // assert.ok(window.clearTimeout !== undefined)
-            done()
-          }, 30)
-        })
-        it('should evaluate safely', function (done) {
-          var context = {
-            setTimeout: clones(setTimeout, window),
-            clearTimeout: clones(clearTimeout, window),
-            console: clones(console, console)
-          }
+        setTimeout(function () {
+          // assert.ok(window.clearTimeout !== undefined)
+          done()
+        }, 30)
+      })
+      it('should evaluate safely', function (done) {
+        var context = {
+          setTimeout: clones(setTimeout, window),
+          clearTimeout: clones(clearTimeout, window),
+          console: clones(console, console)
+        }
 
-          saferEval(`(function () {
+        saferEval(`(function () {
             var start = Date.now()
             setTimeout(function () {
               console.log('hello', Date.now() - start)
             }, 10)
             clearTimeout = undefined
           })()`, context)
-          setTimeout(function () {
-            assert.ok(clearTimeout !== undefined)
-            done()
-          }, 30)
-        })
+        setTimeout(function () {
+          assert.ok(clearTimeout !== undefined)
+          done()
+        }, 30)
       })
-    }
+    })
+  })
+
+  describe('non javascript identifiers', function () {
+    let root
+
+    before(function () {
+      root = isBrowser ? window : global
+    })
+
+    // https://mathiasbynens.be/notes/javascript-identifiers
+    it('should ignore containing "-"', function () {
+      root['test-this'] = 1
+      const res = saferEval('1 + 1')
+      assert.strictEqual(res, 2)
+    })
+    it('should ignore starting with digit', function () {
+      root['1test'] = 1
+      const res = saferEval('1 + 1')
+      assert.strictEqual(res, 2)
+    })
+    it('should ignore keyword', function () {
+      root.catch = 1
+      const res = saferEval('1 + 1')
+      assert.strictEqual(res, 2)
+    })
+    it('should ignore es6 keyword', function () {
+      root.class = 1
+      const res = saferEval('1 + 1')
+      assert.strictEqual(res, 2)
+    })
+    it('should ignore null', function () {
+      root.null = 1
+      const res = saferEval('1 + 1')
+      assert.strictEqual(res, 2)
+    })
+    it('should ignore true', function () {
+      root.true = 1
+      const res = saferEval('1 + 1')
+      assert.strictEqual(res, 2)
+    })
   })
 })
