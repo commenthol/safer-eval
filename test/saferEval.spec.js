@@ -270,6 +270,14 @@ describe('#saferEval', function () {
         }
         assert.strictEqual(res, undefined)
       })
+      it('should prevent a breakout using Object.constructor', function () {
+        let res
+        try {
+          res = saferEval(`{}.constructor.constructor("return this.constructor.constructor('return this')()")().process.mainModule.require('child_process').execSync('pwd').toString()`)
+        } catch (e) {
+        }
+        assert.strictEqual(res, undefined)
+      })
     })
 
     describeBrowser('in browser', function () {
