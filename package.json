@@ -1,6 +1,6 @@
 {
   "name": "safer-eval",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "a safer eval",
   "keywords": [
     "eval",
