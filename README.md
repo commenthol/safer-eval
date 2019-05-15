@@ -11,7 +11,9 @@ Especially when it comes to passing `context` props.
 Use [clones][] to wrap-up the methods you like to allow.
 Checkout the "harmful context" tests section.
 
-> **Warning:** The `saferEval` function may be harmful - so you are warned!
+![warning](https://raw.githubusercontent.com/commenthol/safer-eval/master/warning.png)
+
+**Warning:** The `saferEval` function may be harmful - so you are warned!
 
 In node the `vm` module is used to sandbox the evaluation of `code`.
 
@@ -36,6 +38,14 @@ Runs on node and in modern browsers:
 ```
 npm install --save safer-eval
 ```
+
+## Implementation recommendations
+
+Be aware that a `saferEval('function(){while(true){}}()')` may run
+infinitely. Consider using the module from within a worker thread which is terminated
+after timeout.
+
+Avoid passing context props while deserializing data from hostile environments.
 
 ## Usage
 
