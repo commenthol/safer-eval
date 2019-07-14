@@ -25,9 +25,9 @@ Runs on node and in modern browsers:
 
 |                | Versions |
 | ---            | ---      |
-| **node**       | 4, 6, 8, 10, 11 |
-| **Chrome**     | 69, 71 |
-| **Firefox**    | 60, 64 |
+| **node**       | 8, 10, 11, 12 |
+| **Chrome**     | 70, 75 |
+| **Firefox**    | 60, 68 |
 | **Edge**       | 17, 18 |
 | **IE**         | ~~11~~ |
 | **Safari**     | 11, 12|
