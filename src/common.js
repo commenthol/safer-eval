@@ -47,13 +47,17 @@ exports.createContext = function () {
     cloneFunctions(context)
     context.Buffer = _protect('Buffer')
     context.console = clones(console, console) // console needs special treatment
+    context.console.constructor.constructor = 'function () {}'
   }
   if (hasWindow) {
     fillContext(window, true)
     cloneFunctions(context)
     protectBuiltInObjects(context)
     context.console = clones(console, console) // console needs special treatment
-    context.Object.constructor.constructor = 'function () {}'
+    try {
+      context.Object.constructor.constructor = 'function () {}'
+    } catch (e) {
+    }
   }
 
   return context
@@ -82,7 +86,7 @@ function cloneFunctions (context) {
     'clearTimeout'
   ].forEach((str) => {
     try {
-      let fn = new Function(`return ${str}`)() // eslint-disable-line no-new-func
+      const fn = new Function(`return ${str}`)() // eslint-disable-line no-new-func
       context[str] = fn
         ? function () {
           return fn.apply(null, [].slice.call(arguments))
@@ -97,7 +101,7 @@ function cloneFunctions (context) {
     'setTimeout'
   ].forEach((str) => {
     try {
-      let fn = new Function(`return ${str}`)() // eslint-disable-line no-new-func
+      const fn = new Function(`return ${str}`)() // eslint-disable-line no-new-func
       context[str] = fn
         ? function (f) {
           if (typeof f === 'function') {
@@ -175,7 +179,7 @@ function protectBuiltInObjects (context) {
 */
 function _protect (str) {
   try {
-    let type = new Function(`return ${str}`)() // eslint-disable-line no-new-func
+    const type = new Function(`return ${str}`)() // eslint-disable-line no-new-func
     return type
       ? clones.classes(type)
       : undefined

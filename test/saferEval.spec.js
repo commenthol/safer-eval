@@ -83,8 +83,9 @@ describe('#saferEval', function () {
     })
 
     it('setInterval passing a function', function (done) {
-      var res = saferEval('(function (){var id = setInterval(function () {Array._test = 111;  console.log("intervall"); clearInterval(id)}, 5)}())')
-      assert.strictEqual(res)
+      var res = saferEval('(function (){var id = setInterval(function () {Array._test = 111;  console.log("interval"); clearInterval(id)}, 5)})')
+      assert.strictEqual(typeof res, 'function')
+      res()
       setTimeout(function () {
         assert.strictEqual(Array._test, undefined)
         done()
@@ -270,6 +271,22 @@ describe('#saferEval', function () {
         }
         assert.strictEqual(res, undefined)
       })
+      it('should not allow using console.constructor.constructor', function () {
+        let res
+        try {
+          res = saferEval("console.constructor.constructor('return process')().env")
+        } catch (e) {
+        }
+        assert.strictEqual(res, undefined)
+      })
+      it('should not allow using JSON.constructor.constructor', function () {
+        let res
+        try {
+          res = saferEval("JSON.constructor.constructor('return process')().env")
+        } catch (e) {
+        }
+        assert.strictEqual(res, undefined)
+      })
       it('should prevent a breakout using Object.constructor', function () {
         let res
         try {
@@ -301,7 +318,15 @@ describe('#saferEval', function () {
       it('should not allow using Object.constructor.constructor', function () {
         let res
         try {
-          res = saferEval("Object.constructor.constructor('return localStorage')()")
+          res = saferEval("Object.constructor.constructor('return window')()")
+        } catch (e) {
+        }
+        assert.strictEqual(res, undefined)
+      })
+      it('should not allow using console.constructor.constructor', function () {
+        let res
+        try {
+          res = saferEval("console.constructor.constructor('return window')()")
         } catch (e) {
         }
         assert.strictEqual(res, undefined)

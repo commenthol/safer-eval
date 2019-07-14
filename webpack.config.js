@@ -6,8 +6,8 @@ module.exports = {
   devtool: 'source-map',
   resolve: {
     alias: {
-      'src': path.resolve(__dirname, 'src'),
-      'lib': path.resolve(__dirname, 'lib')
+      src: path.resolve(__dirname, 'src'),
+      lib: path.resolve(__dirname, 'lib')
     }
   },
   module: {
