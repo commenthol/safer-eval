@@ -1,5 +1,7 @@
 /* eslint no-new-func:0 */
 
+'use strict'
+
 var assert = require('assert')
 var clones = require('clones')
 var saferEval = require('..')
@@ -295,6 +297,23 @@ describe('#saferEval', function () {
         }
         assert.strictEqual(res, undefined)
       })
+      it('should prevent a breakout using function.caller - NEEDS "use strict" being set', function () {
+        'use strict'
+
+        let res
+        try {
+          const stmt = `(() => {
+            function f() {
+              return f.caller.constructor('return global')();
+            }
+            return f.constructor('return ' + f)();
+          })();
+          `
+          res = saferEval(stmt)()
+        } catch (e) {
+        }
+        assert.strictEqual(res, undefined)
+      })
     })
 
     describeBrowser('in browser', function () {
@@ -327,6 +346,22 @@ describe('#saferEval', function () {
         let res
         try {
           res = saferEval("console.constructor.constructor('return window')()")
+        } catch (e) {
+        }
+        assert.strictEqual(res, undefined)
+      })
+      it('should prevent a breakout using function.caller - NEEDS "use strict" being set', function () {
+        'use strict'
+
+        let res
+        try {
+          const stmt = `(() => {
+            function f() {
+              return f.caller.constructor('return window')();
+            }
+            return f.constructor('return ' + f)();
+            })()`
+          res = saferEval(stmt)()
         } catch (e) {
         }
         assert.strictEqual(res, undefined)

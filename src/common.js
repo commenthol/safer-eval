@@ -8,6 +8,8 @@ exports.hasWindow = hasWindow
 const hasGlobal = (typeof global !== 'undefined')
 exports.hasGlobal = hasGlobal
 
+const FN_NOOP = 'function () {}'
+
 const NON_IDENTIFIER = /^\d|-|^(break|case|catch|continue|debugger|default|delete|do|else|finally|for|function|if|in|instanceof|new|return|switch|this|throw|try|typeof|var|void|while|with|class|const|enum|export|extends|import|super|implements|interface|let|package|private|protected|public|static|yield|null|true|false)$/
 
 const isIdentifier = key => !NON_IDENTIFIER.test(key)
@@ -47,7 +49,7 @@ exports.createContext = function () {
     cloneFunctions(context)
     context.Buffer = _protect('Buffer')
     context.console = clones(console, console) // console needs special treatment
-    context.console.constructor.constructor = 'function () {}'
+    context.console.constructor.constructor = FN_NOOP
   }
   if (hasWindow) {
     fillContext(window, true)
@@ -55,7 +57,7 @@ exports.createContext = function () {
     protectBuiltInObjects(context)
     context.console = clones(console, console) // console needs special treatment
     try {
-      context.Object.constructor.constructor = 'function () {}'
+      context.Object.constructor.constructor = FN_NOOP
     } catch (e) {
     }
   }
@@ -123,7 +125,6 @@ function cloneFunctions (context) {
 function protectBuiltInObjects (context) {
   ;[
     'Object',
-    // 'Object.constructor.constructor',
     'Boolean',
     'Symbol',
     'Error',
