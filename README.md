@@ -41,11 +41,39 @@ npm install --save safer-eval
 
 ## Implementation recommendations
 
-Be aware that a `saferEval('function(){while(true){}}()')` may run
+**Use strict mode**
+
+Always use `'use strict'` mode in functions/ files calling `saferEval()`.
+Otherwise a sandbox breakout may be possible.
+
+```js
+
+'use strict'
+const saferEval = require('safer-eval')
+
+function main () {
+  'use strict' //< alternative within function
+  const res = saferEval('new Date()')
+  ...
+}
+
+```
+
+**Run in worker**
+
+Be aware that a
+
+```js
+saferEval('(function () { while (true) {} })()')
+```
+
+may run
 infinitely. Consider using the module from within a worker thread which is terminated
 after timeout.
 
-Avoid passing context props while deserializing data from hostile environments.
+**Avoid context props**
+
+Avoid passing `context` props while deserializing data from hostile environments.
 
 ## Usage
 
@@ -66,9 +94,11 @@ Check the tests under "harmful context"!
 in node:
 
 ```js
-var saferEval = require('safer-eval')
-var code = `{d: new Date('1970-01-01'), b: new Buffer('data')}`
-var res = saferEval(code)
+'use strict' //< NEVER FORGET TO ADD STRICT MODE in file/ function
+             //< running `saferEval`
+const saferEval = require('safer-eval')
+const code = `{d: new Date('1970-01-01'), b: new Buffer('data')}`
+const res = saferEval(code)
 // => toString.call(res.d) = '[object Date]'
 // => toString.call(res.b) = '[object Buffer]'
 ```
@@ -76,9 +106,11 @@ var res = saferEval(code)
 in browser:
 
 ```js
-var saferEval = require('safer-eval')
-var code = `{d: new Date('1970-01-01'), b: function () { return navigator.userAgent }`
-var res = saferEval(code, {navigator: window.navigator})
+'use strict' //< NEVER FORGET TO ADD STRICT MODE in file/ function
+             //< running `saferEval`
+const saferEval = require('safer-eval')
+const code = `{d: new Date('1970-01-01'), b: function () { return navigator.userAgent }`
+const res = saferEval(code, {navigator: window.navigator})
 // => toString.call(res.d) = '[object Date]'
 // => toString.call(res.b) = '[object Function]'
 // => res.b() = "Mozilla/5.0 (..."
@@ -87,19 +119,19 @@ var res = saferEval(code, {navigator: window.navigator})
 To minimize any harmful code injection carefully select the methods you allow in `context`
 
 ```js
-var code = `window.btoa('Hello, world')`
+const code = `window.btoa('Hello, world')`
 
 // AVOID passing a GLOBAL context!!!
-var res = saferEval(code, {window: window})
+const res = saferEval(code, {window: window})
 
 // BETTER - code needs only access to window.btoa
 const clones = require('clones')
-var context = {
+const context = {
   window: {
     btoa: clones(window.btoa, window)
   }
 }
-var res = saferEval(code ,context)
+const res = saferEval(code ,context)
 // => res = 'SGVsbG8sIHdvcmxk'
 ```
 
@@ -108,10 +140,12 @@ var res = saferEval(code ,context)
 Use `new SaferEval()` to reuse a once created context.
 
 ```js
-const {SaferEval} = require('safer-eval')
+'use strict' //< NEVER FORGET TO ADD STRICT MODE in file/ function
+             //< running `saferEval`
+const { SaferEval } = require('safer-eval')
 const safer = new SaferEval()
-var code = `{d: new Date('1970-01-01'), b: new Buffer('data')}`
-var res = safer.runInContext(code)
+const code = `{d: new Date('1970-01-01'), b: new Buffer('data')}`
+const res = safer.runInContext(code)
 ```
 
 ## License
