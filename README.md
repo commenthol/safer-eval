@@ -1,19 +1,30 @@
-# safer-eval
+# safer-eval but harmful
 
 [![NPM version](https://badge.fury.io/js/safer-eval.svg)](https://www.npmjs.com/package/safer-eval/)
 
-> a safer eval
+> harmful as eval
 
-A safer approach for eval in node and browser. Before using this module, **ask
-yourself if there are no better options** than using saferEval.
-It is potentially better than the bad old `eval()` but still has some harmful potential.
-Especially when it comes to passing `context` props.
-Use [clones][] to wrap-up the methods you like to allow.
+This approach has proven to be HARMFUL and does not suit as repacement for eval in node and browser. 
+Before using this module, **ask yourself if there are no better options** than using saferEval.
+It is potentially better than the bad old `eval()` but has harmful potential.
 Checkout the "harmful context" tests section.
 
-![warning](https://raw.githubusercontent.com/commenthol/safer-eval/master/warning.png)
+![harmful](https://raw.githubusercontent.com/commenthol/safer-eval/master/harmful.png)
 
-**Warning:** The `saferEval` function may be harmful - so you are warned!
+**Warning:** The `saferEval` function is harmful - so you are warned!
+
+Better packages:
+
+- For node check [vm2](https://www.npmjs.com/package/vm2).
+
+----
+
+If you like to **post exploits** you found on this module, feel free to do so. 
+Please file an issue with your findings.
+
+Maybe this helps then others to build a better sandbox.
+
+----
 
 In node the `vm` module is used to sandbox the evaluation of `code`.
 
