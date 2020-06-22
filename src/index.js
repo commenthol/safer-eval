@@ -6,6 +6,7 @@
 'use strict'
 
 const vm = require('vm')
+const babel = require("@babel/core");
 const { createContext, allow } = require('./common')
 
 /**
@@ -45,6 +46,10 @@ class SaferEval {
     src += 'return ' + code + ';\n'
     src += '})()'
 
+    const ast = babel.parse(src);
+    // this is probably the wrong place to try and fix, TBH
+    console.log('SRC\n', src.toString(), '\nLENGTH:', src.toString().length);
+    console.log('AST\n', ast.toString(), '\nLENGTH:', ast.toString().length);
     return vm.runInContext(src, this._context, this._options)
   }
 }
