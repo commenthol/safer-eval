@@ -370,6 +370,55 @@ describe('#saferEval', function () {
   })
 
   describe('harmful context', function () {
+    // Testing security mitigation
+    // https://github.com/commenthol/safer-eval/issues/10
+    it('tries to breakout', function () {
+      let res
+      const theFunction = function () {
+        const f = Buffer.prototype.write
+        const ft = {
+          length: 10,
+          utf8Write () {
+
+          }
+        }
+        function r (i) {
+          var x = 0
+          try {
+            x = r(i)
+          } catch (e) {}
+          if (typeof (x) !== 'number') { return x }
+          if (x !== i) { return x + 1 }
+          try {
+            f.call(ft)
+          } catch (e) {
+            return e
+          }
+          return null
+        }
+        var i = 1
+        while (1) {
+          try {
+            i = r(i).constructor.constructor('return process')()
+            break
+          } catch (x) {
+            i++
+          }
+        }
+        return i.mainModule.require('child_process').execSync('id').toString()
+      }
+
+      const evil = `(${theFunction})()`
+      try {
+        res = saferEval(evil)
+      } catch (e) {
+        console.log(e)
+        assert.strictEqual(e, RangeError)
+      }
+      assert.strictEqual(res, undefined)
+      console.log(res)
+    })
+
     describeNode('in node', function () {
       it('evaluates global.eval if passing global as context - which is a bad idea', function () {
         var res = saferEval('global.eval(9 + 25)', { global: global }) // !!! try to avoid passing global as context this way
