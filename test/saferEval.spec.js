@@ -370,11 +370,9 @@ describe('#saferEval', function () {
   })
 
   describe('harmful context', function () {
-    // Testing security mitigation
-    // https://github.com/commenthol/safer-eval/issues/10
+    // security mitigation: https://github.com/commenthol/safer-eval/issues/10
     it('tries to breakout', function () {
-      let res
-      const theFunction = function () {
+      const maliciousFunction = function () {
         const f = Buffer.prototype.write
         const ft = {
           length: 10,
@@ -408,15 +406,19 @@ describe('#saferEval', function () {
         return i.mainModule.require('child_process').execSync('id').toString()
       }
 
-      const evil = `(${theFunction})()`
-      try {
-        res = saferEval(evil)
-      } catch (e) {
-        console.log(e)
-        assert.strictEqual(e, RangeError)
-      }
+      const evil = `(${maliciousFunction})()`
+      const res = saferEval(evil)
       assert.strictEqual(res, undefined)
-      console.log(res)
+    })
+
+    it('tries to breakout another way', function () {
+      const anotherMaliciousFunction = function () {
+        const process = clearImmediate.constructor('return process;')()
+        return process.mainModule.require('child_process').execSync('whoami').toString()
+      }
+      const evil = `(${anotherMaliciousFunction})()`
+      const res = saferEval(evil)
+      assert.strictEqual(res, undefined)
     })
 
     describeNode('in node', function () {
