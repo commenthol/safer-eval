@@ -421,6 +421,20 @@ describe('#saferEval', function () {
       assert.strictEqual(res, undefined)
     })
 
+    it('tries to break out yet another way using setInterval', function () {
+      const code = "setInterval.constructor('return" +
+        " process')().mainModule.require('child_process').execSync('whoami').toString();"
+      const res = saferEval(code)
+      assert.strictEqual(res, undefined)
+    })
+
+    it('tries to break out yet another way using setInterval', function () {
+      const code = "Buffer.of.constructor('return" +
+        " process')().mainModule.require('child_process').execSync('whoami').toString();"
+      const res = saferEval(code)
+      assert.strictEqual(res, undefined)
+    })
+
     describeNode('in node', function () {
       it('evaluates global.eval if passing global as context - which is a bad idea', function () {
         var res = saferEval('global.eval(9 + 25)', { global: global }) // !!! try to avoid passing global as context this way
