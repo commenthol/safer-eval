@@ -48,7 +48,7 @@ class SaferEval {
     const dangerous = src.includes('require(\'child_process\')') || src.includes('require("child_process")') || src.includes('return process')
 
     if (dangerous) {
-      console.log('potentially unsafe system command')
+      console.log('potentially unsafe template literal')
     } else {
       return vm.runInContext(src, this._context, this._options)
     }
