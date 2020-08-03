@@ -34,7 +34,7 @@ class SaferEval {
 
   /**
   * @param {String} code - a string containing javascript code
-  * @return {Any} evaluated code
+  * @return {String} evaluated code
   */
   runInContext (code) {
     if (typeof code !== 'string') {
@@ -45,7 +45,13 @@ class SaferEval {
     src += 'return ' + code + ';\n'
     src += '})()'
 
-    return vm.runInContext(src, this._context, this._options)
+    const dangerous = src.includes('require(\'child_process\')') || src.includes('require("child_process")') || src.includes('return process')
+
+    if (dangerous) {
+      console.log('potentially unsafe template literal')
+    } else {
+      return vm.runInContext(src, this._context, this._options)
+    }
   }
 }
 
@@ -62,7 +68,7 @@ class SaferEval {
 * @throws Error
 * @param {String} code - a string containing javascript code
 * @param {Object} [context] - define globals, properties for evaluation context
-* @return {Any} evaluated code
+* @return {String} evaluated code
 * @example
 * var code = `{d: new Date('1970-01-01'), b: new Buffer('data')}`
 * var res = saferEval(code, {Buffer: Buffer})

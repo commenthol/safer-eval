@@ -52,7 +52,7 @@ exports.createContext = function () {
     context.console.constructor.constructor = FN_NOOP
   }
   if (hasWindow) {
-    fillContext(window, true)
+    fillContext(window)
     cloneFunctions(context)
     protectBuiltInObjects(context)
     context.console = clones(console, console) // console needs special treatment
